@@ -43,3 +43,27 @@ void setup() {
 
 void loop() {
 }
+
+void SPI_Write(unsigned char Byte)
+{
+  for(int i = 0; i < 8; i++)
+  {
+     if(Byte&0x80)
+     {
+      digitalWrite(MOSI,1);
+     }
+     else
+     {
+      digitalWrite(MOSI,0);
+     }
+     digitalWrite(SCK,1);
+     Byte <<= 1;
+     if(digitalRead(MISO)==1)
+     {
+      Byte |= 1;
+     }
+     digitalWrite(SCK,0);
+
+     return Byte;
+  }
+}
