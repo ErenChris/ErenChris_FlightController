@@ -44,7 +44,7 @@ void setup() {
 void loop() {
 }
 
-void SPI_Write(unsigned char Byte)
+void SPI_WriteRead(unsigned char Byte)
 {
   for(int i = 0; i < 8; i++)
   {
