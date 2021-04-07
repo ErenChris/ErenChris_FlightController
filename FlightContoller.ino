@@ -36,6 +36,10 @@
 #define RX_PW_P4 0x15
 #define RX_PW_P5 0x16
 #define FIFO_STATUS 0x17
+//定义引脚(待确认)
+#define IRQ 8
+#define CE  9
+#define CSN 10
 
 void setup() {
   Serial.begin(9600);
@@ -44,7 +48,7 @@ void setup() {
 void loop() {
 }
 
-void SPI_WriteRead(unsigned char Byte)
+void SPI_Write(unsigned char Byte)
 {
   for(int i = 0; i < 8; i++)
   {
@@ -58,12 +62,44 @@ void SPI_WriteRead(unsigned char Byte)
      }
      digitalWrite(SCK,1);
      Byte <<= 1;
-     if(digitalRead(MISO)==1)
-     {
-      Byte |= 1;
-     }
      digitalWrite(SCK,0);
 
      return Byte;
   }
+}
+
+byte SPI_Read()
+{
+  byte temp = 0;
+  for(int i=0;i<8;i++)
+  {
+    temp <<= 1;
+    digitalWrite(SCK,1);
+    if(MISO)
+      temp |= 0x01;
+    else
+      temp &= 0x01;
+    digitalWrite(SCK,0);
+  }
+
+  return temp;
+}
+
+void SPI_Reg_Write(byte address, byte value)
+{
+  digitalWrite(CSN,0);
+  SPI_Write(address+WRITE_REG);//向模块写入“写寄存器命令”
+  SPI_Write(value);
+  digitalWrite(CSN,1);
+}
+
+byte SPI_Reg_Read(byte address)
+{
+  byte outputValue;
+  digitalWrite(CSN,0);
+  SPI_Write(address+READ_REG);
+  outputValue = SPI_Read();
+  digitalWrite(CSN,1);
+
+  return outputValue;
 }
