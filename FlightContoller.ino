@@ -36,10 +36,10 @@
 #define RX_PW_P4 0x15
 #define RX_PW_P5 0x16
 #define FIFO_STATUS 0x17
-//定义引脚(待确认)
-#define IRQ 8
-#define CE  9
-#define CSN 10
+//定义引脚
+//#define IRQ 
+#define CE  7
+#define CSN 8
 
 void setup() {
   Serial.begin(9600);
