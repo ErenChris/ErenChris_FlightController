@@ -48,6 +48,13 @@ void setup() {
 void loop() {
 }
 
+void init_nrf24l01()
+{
+  digitalWrite(IRQ,0);
+  digitalWrite(CE,0);
+  digitalWrite(CSN,1);
+}
+
 void SPI_Write(unsigned char Byte)
 {
   for(int i = 0; i < 8; i++)
