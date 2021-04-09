@@ -43,16 +43,31 @@
 
 void setup() {
   Serial.begin(9600);
+  pinMode(CE,OUTPUT);
+  pinMode(CSN,OUTPUT);
+  pinMode(MOSI,OUTPUT);
+  pinMode(MISO,INPUT);
+  pinMode(SCK,OUTPUT);
+
+  init_nrf24l01();
+  
 }
 
-void loop() {
+void loop() 
+{
+  byte status_nrf;
+
+  status_nrf=SPI_Reg_Read(0x07);
+  Serial.println((byte)status_nrf);
+  delay(1000);
 }
 
 void init_nrf24l01()
 {
-  digitalWrite(IRQ,0);
   digitalWrite(CE,0);
   digitalWrite(CSN,1);
+
+  init_TX_Mode();
 }
 
 void SPI_Write(unsigned char Byte)
@@ -95,7 +110,7 @@ byte SPI_Read()
 void SPI_Reg_Write(byte address, byte value)
 {
   digitalWrite(CSN,0);
-  SPI_Write(address+WRITE_REG);//向模块写入“写寄存器命令”
+  SPI_Write(address+WRITE_REG);
   SPI_Write(value);
   digitalWrite(CSN,1);
 }
@@ -104,9 +119,43 @@ byte SPI_Reg_Read(byte address)
 {
   byte outputValue;
   digitalWrite(CSN,0);
-  SPI_Write(address+READ_REG);
-  outputValue = SPI_Read();
+  outputValue = nRF24L01_SPI_RW((byte)(address+READ_REG));
+  Serial.println((byte)address+READ_REG);
   digitalWrite(CSN,1);
 
   return outputValue;
+}
+
+void init_TX_Mode()
+{
+  
+}
+
+unsigned char nRF24L01_SPI_RW(unsigned char dat)
+{
+    unsigned char i;
+    for(i=0;i<8;i++)
+    {
+        if(dat&0x80)
+        {
+            digitalWrite(MOSI,1);
+        }
+        else
+        {
+            digitalWrite(MOSI,0);
+        }
+        dat=(dat<<1);
+        digitalWrite(SCK,1);
+        if(digitalRead(MISO))
+        {
+            dat|=1;
+        }
+        else
+        {
+            dat|=0;
+        }
+        digitalWrite(SCK,0); 
+    }
+    
+    return(dat);
 }
