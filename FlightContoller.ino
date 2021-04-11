@@ -50,14 +50,14 @@ void setup() {
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
-  
+  SPI_Reg_Write(0x00,0x4e);
 }
 
 void loop() 
 {
   byte status_nrf;
 
-  status_nrf=SPI_Reg_Read(0x07);
+  status_nrf=SPI_Reg_Read(0x00);
   Serial.println((byte)status_nrf);
   delay(1000);
 }
@@ -97,7 +97,7 @@ byte SPI_Read()
   {
     temp <<= 1;
     digitalWrite(SCK,1);
-    if(MISO)
+    if(digitalRead(MISO))
       temp |= 0x01;
     else
       temp &= 0x01;
@@ -120,7 +120,6 @@ byte SPI_Reg_Read(byte address)
   byte outputValue;
   digitalWrite(CSN,0);
   outputValue = nRF24L01_SPI_RW((byte)(address+READ_REG));
-  Serial.println((byte)address+READ_REG);
   digitalWrite(CSN,1);
 
   return outputValue;
