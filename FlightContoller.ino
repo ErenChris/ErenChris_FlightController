@@ -50,16 +50,18 @@ void setup() {
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
-  SPI_Reg_Write(0x00,0x4e);
+  SPI_Reg_Write(CONFIG,0x6e);
+  Serial.println(int(0x6e));
+  delay(5000);
 }
 
 void loop() 
 {
-  byte status_nrf;
+  byte regValue_nrf;
 
-  status_nrf=SPI_Reg_Read(0x00);
-  Serial.println((byte)status_nrf);
-  delay(1000);
+  regValue_nrf=SPI_Reg_Read(CONFIG);
+  Serial.println((byte)regValue_nrf);
+  delay(100);
 }
 
 void init_nrf24l01()
@@ -70,7 +72,7 @@ void init_nrf24l01()
   init_TX_Mode();
 }
 
-void SPI_Write(unsigned char Byte)
+void SPI_Write(byte Byte)
 {
   for(int i = 0; i < 8; i++)
   {
@@ -85,32 +87,35 @@ void SPI_Write(unsigned char Byte)
      digitalWrite(SCK,1);
      Byte <<= 1;
      digitalWrite(SCK,0);
-
-     return Byte;
   }
 }
 
-byte SPI_Read()
+byte SPI_Read(byte address)
 {
-  byte temp = 0;
+  byte dat = 0;
+  SPI_Write(address);
   for(int i=0;i<8;i++)
   {
-    temp <<= 1;
+    dat <<= 1;
     digitalWrite(SCK,1);
     if(digitalRead(MISO))
-      temp |= 0x01;
+    {
+        dat|=1;
+    }
     else
-      temp &= 0x01;
+    {
+        dat|=0;
+    }
     digitalWrite(SCK,0);
   }
 
-  return temp;
+  return dat;
 }
 
 void SPI_Reg_Write(byte address, byte value)
 {
   digitalWrite(CSN,0);
-  SPI_Write(address+WRITE_REG);
+  SPI_Write(byte(address+WRITE_REG));
   SPI_Write(value);
   digitalWrite(CSN,1);
 }
@@ -119,7 +124,7 @@ byte SPI_Reg_Read(byte address)
 {
   byte outputValue;
   digitalWrite(CSN,0);
-  outputValue = nRF24L01_SPI_RW((byte)(address+READ_REG));
+  outputValue = SPI_Read(address);
   digitalWrite(CSN,1);
 
   return outputValue;
