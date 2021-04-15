@@ -43,6 +43,7 @@
 
 void setup() {
   Serial.begin(9600);
+  pinMode(13,OUTPUT);
   pinMode(CE,OUTPUT);
   pinMode(CSN,OUTPUT);
   pinMode(MOSI,OUTPUT);
@@ -50,7 +51,8 @@ void setup() {
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
-  SPI_Reg_Write(CONFIG,0x6e);
+  SPI_Reg_Write(CONFIG,0x02);
+  //SPI_Reg_Write();
   Serial.println(int(0x6e));
   delay(5000);
 }
@@ -61,7 +63,7 @@ void loop()
 
   regValue_nrf=SPI_Reg_Read(CONFIG);
   Serial.println((byte)regValue_nrf);
-  delay(100);
+  delay(1000);
 }
 
 void init_nrf24l01()
