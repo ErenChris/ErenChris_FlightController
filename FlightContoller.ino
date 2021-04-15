@@ -61,9 +61,9 @@ void loop()
 {
   byte regValue_nrf;
 
-  regValue_nrf=SPI_Reg_Read(CONFIG);
+  regValue_nrf=SPI_Read_2(CONFIG);
   Serial.println((byte)regValue_nrf);
-  delay(1000);
+  delay(10);
 }
 
 void init_nrf24l01()
@@ -137,7 +137,7 @@ void init_TX_Mode()
   
 }
 
-unsigned char nRF24L01_SPI_RW(unsigned char dat)
+byte nRF24L01_SPI_RW(byte dat)
 {
     unsigned char i;
     for(i=0;i<8;i++)
@@ -164,4 +164,17 @@ unsigned char nRF24L01_SPI_RW(unsigned char dat)
     }
     
     return(dat);
+}
+
+byte SPI_Read_2(byte reg)
+{
+  byte reg_val;
+
+  digitalWrite(CSN,0);
+  nRF24L01_SPI_RW(reg);
+  reg_val = nRF24L01_SPI_RW(0);
+
+  digitalWrite(CSN,0);
+
+  return(reg_val);
 }
