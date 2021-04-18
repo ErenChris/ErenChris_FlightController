@@ -40,7 +40,6 @@
 //#define IRQ 
 #define CE  7
 #define CSN 8
-#define MISO_2   9
 
 void setup() {
   Serial.begin(9600);
@@ -48,11 +47,11 @@ void setup() {
   pinMode(CE,OUTPUT);
   pinMode(CSN,OUTPUT);
   pinMode(MOSI,OUTPUT);
-  pinMode(MISO_2,INPUT_PULLUP);
+  pinMode(MISO,INPUT_PULLUP);
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
-  SPI_Reg_Write(CONFIG,0x02);
+  SPI_Reg_Write(CONFIG,0x6e);
   //SPI_Reg_Write();
   Serial.println(int(0x6e));
   delay(500);
@@ -61,10 +60,9 @@ void setup() {
 void loop() 
 {
   byte regValue_nrf;
-
   regValue_nrf=SPI_Read_2(CONFIG);
   Serial.println((byte)regValue_nrf);
-  delay(100);
+  delay(10);
 }
 
 void init_nrf24l01()
@@ -102,7 +100,7 @@ byte SPI_Read(byte address)
     dat <<= 1;
     digitalWrite(SCK,1);
     delay(1);
-    if(digitalRead(MISO_2))
+    if(digitalRead(MISO))
     {
         dat|=1;
     }
@@ -155,7 +153,7 @@ byte nRF24L01_SPI_RW(byte dat)
         }
         dat=(dat<<1);
         digitalWrite(SCK,1);
-        if(digitalRead(MISO_2))
+        if(digitalRead(MISO))
         {
             dat|=1;
         }
