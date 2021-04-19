@@ -41,6 +41,9 @@
 #define CE  7
 #define CSN 8
 
+byte RX_Data_Package[32];
+byte TX_Data_Package[32];
+
 void setup() {
   Serial.begin(9600);
   pinMode(13,OUTPUT);
@@ -60,7 +63,7 @@ void setup() {
 void loop() 
 {
   byte regValue_nrf;
-  regValue_nrf=SPI_Read_2(CONFIG);
+  regValue_nrf=SPI_Reg_Read(CONFIG);
   Serial.println((byte)regValue_nrf);
   delay(10);
 }
@@ -99,7 +102,6 @@ byte SPI_Read(byte address)
   {
     dat <<= 1;
     digitalWrite(SCK,1);
-    delay(1);
     if(digitalRead(MISO))
     {
         dat|=1;
@@ -109,7 +111,6 @@ byte SPI_Read(byte address)
         dat|=0;
     }
     digitalWrite(SCK,0);
-    delay(1);
   }
 
   return dat;
@@ -138,44 +139,88 @@ void init_TX_Mode()
   
 }
 
-byte nRF24L01_SPI_RW(byte dat)
+void init_RX_Mode()
 {
-    unsigned char i;
-    for(i=0;i<8;i++)
-    {
-        if(dat&0x80)
-        {
-            digitalWrite(MOSI,1);
-        }
-        else
-        {
-            digitalWrite(MOSI,0);
-        }
-        dat=(dat<<1);
-        digitalWrite(SCK,1);
-        if(digitalRead(MISO))
-        {
-            dat|=1;
-        }
-        else
-        {
-            dat|=0;
-        }
-        digitalWrite(SCK,0); 
-    }
-    
-    return(dat);
+  
 }
 
-byte SPI_Read_2(byte reg)
+//byte nRF24L01_SPI_RW(byte dat)
+//{
+//    unsigned char i;
+//    for(i=0;i<8;i++)
+//    {
+//        if(dat&0x80)
+//        {
+//            digitalWrite(MOSI,1);
+//        }
+//        else
+//        {
+//            digitalWrite(MOSI,0);
+//        }
+//        dat=(dat<<1);
+//        digitalWrite(SCK,1);
+//        if(digitalRead(MISO))
+//        {
+//            dat|=1;
+//        }
+//        else
+//        {
+//            dat|=0;
+//        }
+//        digitalWrite(SCK,0); 
+//    }
+//    
+//    return(dat);
+//}
+
+//byte SPI_Read_2(byte reg)
+//{
+//  byte reg_val;
+//
+//  digitalWrite(CSN,0);
+//  nRF24L01_SPI_RW(reg);
+//  reg_val = nRF24L01_SPI_RW(0);
+//
+//  digitalWrite(CSN,0);
+//
+//  return(reg_val);
+//}
+
+void Write_TX_Data(byte *TX_Data)
 {
-  byte reg_val;
-
   digitalWrite(CSN,0);
-  nRF24L01_SPI_RW(reg);
-  reg_val = nRF24L01_SPI_RW(0);
+  SPI_Write(WR_TX_PLOAD);
+  for(int i = 0; i < 32; i++)
+  {
+    if(TX_Data[i])
+     {
+      digitalWrite(MOSI,1);
+     }
+     else
+     {
+      digitalWrite(MOSI,0);
+     }
+  }
+  digitalWrite(SCK,1);
+  delay(1);
+  digitalWrite(SCK,0);
+  delay(1);
+  digitalWrite(CSN,1);
+}
 
+void Read_RX_Data(byte *RX_Data)
+{
   digitalWrite(CSN,0);
-
-  return(reg_val);
+  SPI_Write(RD_RX_PLOAD);
+  for(int i = 0; i < 32; i++)
+  {
+    if(digitalRead(MISO))
+    {
+        RX_Data[i] = 1;
+    }
+    else
+    {
+        RX_Data[i] = 0;
+    }
+  }
 }
