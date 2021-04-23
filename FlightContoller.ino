@@ -45,8 +45,8 @@
 #define TX_DS 0x20
 #define MAX_RT 0x10
 
-byte RX_Data_Package[32];
-byte TX_Data_Package[32];
+byte RX_Data_Package[4];
+byte TX_Data_Package[4];
 byte TX_RX_Address = 0x3443101001;
 
 void setup() {
@@ -63,11 +63,6 @@ void setup() {
   //SPI_Reg_Write();
   Serial.println(int(0x6e));
   delay(500);
-
-  for(int i = 0; i < 32; i++)
-  {
-    TX_Data_Package[i] = 1;
-  }
 
   Write_TX_Data(TX_Data_Package);
 
@@ -159,9 +154,11 @@ void Write_TX_Data(byte *TX_Data)
 {
   digitalWrite(CSN,0);
   SPI_Write(WR_TX_PLOAD);
-  for(int i = 0; i < 32; i++)
+  for(int j = 0; j < 4; j++)
   {
-    if(TX_Data[i])
+    for(int i = 0; i < 8; i++)
+  {
+     if(TX_Data[j]&0x80)
      {
       digitalWrite(MOSI,1);
      }
@@ -169,11 +166,11 @@ void Write_TX_Data(byte *TX_Data)
      {
       digitalWrite(MOSI,0);
      }
+     digitalWrite(SCK,1);
+     TX_Data[j] <<= 1;
+     digitalWrite(SCK,0);
   }
-  digitalWrite(SCK,1);
-  delay(1);
-  digitalWrite(SCK,0);
-  delay(1);
+  }
   digitalWrite(CSN,1);
 }
 
@@ -194,7 +191,7 @@ void Read_RX_Data(byte *RX_Data)
   }
 }
 
-void init_TX_Data()
+void Reset_TX_Data()
 {
   byte Reg_Status;
 
@@ -215,7 +212,7 @@ void init_TX_Data()
   delay(10);
 }
 
-void init_RX_Data()
+void Reset_RX_Data()
 {
   byte Reg_Status;
 
@@ -280,4 +277,3 @@ void init_TX_Mode()
 //
 //  return(reg_val);
 //}
-
