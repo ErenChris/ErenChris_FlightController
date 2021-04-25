@@ -47,7 +47,7 @@
 
 byte RX_Data_Package[4];
 byte TX_Data_Package[4];
-byte TX_RX_Address = 0x3443101001;
+byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
 
 void setup() {
   Serial.begin(9600);
@@ -157,19 +157,19 @@ void Write_TX_Data(byte *TX_Data)
   for(int j = 0; j < 4; j++)
   {
     for(int i = 0; i < 8; i++)
-  {
-     if(TX_Data[j]&0x80)
-     {
-      digitalWrite(MOSI,1);
-     }
-     else
-     {
-      digitalWrite(MOSI,0);
-     }
-     digitalWrite(SCK,1);
-     TX_Data[j] <<= 1;
-     digitalWrite(SCK,0);
-  }
+    {
+       if(TX_Data[j]&0x80)
+       {
+        digitalWrite(MOSI,1);
+       }
+       else
+       {
+        digitalWrite(MOSI,0);
+       }
+       digitalWrite(SCK,1);
+       TX_Data[j] <<= 1;
+       digitalWrite(SCK,0);
+    }
   }
   digitalWrite(CSN,1);
 }
@@ -226,12 +226,30 @@ void Reset_RX_Data()
   SPI_Reg_Write(STATUS,Reg_Status);
 }
 
-void init_TX_Mode()
+void Write_AddressReg(byte Reg, byte *Address)
 {
   digitalWrite(CSN,0);
-  SPI_Write(TX_ADDR);
-  for(int i=0; i<40; i++)
+  SPI_Write(Reg);
+  for(int j = 0; j <5; j++)
   {
-    
+    for(int i = 0; i < 8; i++)
+    {
+       if(Address[j]&0x80)
+       {
+        digitalWrite(MOSI,1);
+       }
+       else
+       {
+        digitalWrite(MOSI,0);
+       }
+       digitalWrite(SCK,1);
+       Address[j] <<= 1;
+       digitalWrite(SCK,0);
+    }
   }
+}
+
+void init_TX_Mode()
+{
+
 }
