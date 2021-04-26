@@ -251,5 +251,28 @@ void Write_AddressReg(byte Reg, byte *Address)
 
 void init_TX_Mode()
 {
+  digitalWrite(CE, 0);
+  Write_AddressReg(TX_ADDR, TX_RX_Address);
+  Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  SPI_Reg_Write(EN_AA, 0x01);
+  SPI_Reg_Write(EN_RXADDR, 0x01);
+  SPI_Reg_Write(CONFIG, 0x0e);
+  SPI_Reg_Write(RF_CH, 40);
+  SPI_Reg_Write(RF_SETUP, 0x07);
+  SPI_Reg_Write(SETUP_RETR, 0x1a);
+  Write_TX_Data(TX_Data_Package);
+  digitalWrite(CE, 1);
+}
 
+void init_RX_Mode()
+{
+  digitalWrite(CE, 0);
+  Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  SPI_Reg_Write(EN_AA, 0x01);
+  SPI_Reg_Write(EN_RXADDR, 0x01);
+  SPI_Reg_Write(RF_CH, 40);
+  SPI_Reg_Write(RX_PW_P0, 32);
+  SPI_Reg_Write(RF_SETUP, 0x07);
+  SPI_Reg_Write(CONFIG, 0x0f);
+  digitalWrite(CE, 1);
 }
