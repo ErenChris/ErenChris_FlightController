@@ -46,7 +46,7 @@
 #define MAX_RT 0x10
 
 byte RX_Data_Package[4];
-byte TX_Data_Package[4];
+byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
 byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
 
 void setup() {
@@ -59,29 +59,12 @@ void setup() {
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
-  SPI_Reg_Write(CONFIG,0x6e);
-  //SPI_Reg_Write();
-  Serial.println(int(0x6e));
-  delay(500);
-
-  Write_TX_Data(TX_Data_Package);
-
-  delay(100);
-
-  Read_RX_Data(TX_Data_Package);
-
-  for(int c = 0; c < 32; c++)
-  {
-    Serial.print(RX_Data_Package[c]);
-  }
+  Serial.println("-----------------初始化已完成-----------------");
 }
 
 void loop() 
 {
-//  byte regValue_nrf;
-//  regValue_nrf=SPI_Reg_Read(CONFIG);
-//  Serial.println((byte)regValue_nrf);
-//  delay(10);
+  Send_Reset_TX_Data();
 }
 
 void init_nrf24l01()
@@ -174,7 +157,7 @@ void Write_TX_Data(byte *TX_Data)
   digitalWrite(CSN,1);
 }
 
-void Read_RX_Data(byte *RX_Data)
+void Read_RX_Data(byte *RX_Data)  //pending fix
 {
   digitalWrite(CSN,0);
   SPI_Write(RD_RX_PLOAD);
@@ -191,7 +174,7 @@ void Read_RX_Data(byte *RX_Data)
   }
 }
 
-void Reset_TX_Data()
+void Send_Reset_TX_Data()
 {
   byte Reg_Status;
 
