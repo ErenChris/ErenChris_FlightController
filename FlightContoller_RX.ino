@@ -45,7 +45,7 @@
 #define TX_DS 0x20
 #define MAX_RT 0x10
 
-byte RX_Data_Package[4];
+byte RX_Data_Package[4]= {0x00,0,0,0};
 byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
 byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
 
@@ -64,7 +64,9 @@ void setup() {
 
 void loop() 
 {
-  Send_Reset_TX_Data();
+  Serial.println(RX_Data_Package[0]);
+  Reset_RX_Data();
+  Serial.println(RX_Data_Package[0]);
 }
 
 void init_nrf24l01()
@@ -72,7 +74,7 @@ void init_nrf24l01()
   digitalWrite(CE,0);
   digitalWrite(CSN,1);
 
-  init_TX_Mode();
+  init_RX_Mode();
 }
 
 void SPI_Write(byte Byte)
@@ -178,6 +180,7 @@ void Read_RX_Data(byte *RX_Data)
         digitalWrite(SCK,0);
       }
   }
+  digitalWrite(CSN,1);
 }
 
 void Send_Reset_TX_Data()
@@ -204,15 +207,23 @@ void Send_Reset_TX_Data()
 void Reset_RX_Data()
 {
   byte Reg_Status;
+  byte Reg_Status2;
 
   Reg_Status = SPI_Reg_Read(STATUS);
+  Serial.println(byte(Reg_Status));
+  delay(100);
+  Serial.print("接受中断位：");
+  Serial.println(Reg_Status & RX_DR);
   if(Reg_Status & RX_DR)
   {
     Read_RX_Data(RX_Data_Package);
     SPI_Write(FLUSH_RX);
   }
 
-  SPI_Reg_Write(STATUS,Reg_Status);
+  SPI_Reg_Write(STATUS,0x40);
+  Reg_Status2 = SPI_Reg_Read(STATUS);
+  Serial.print("Reg_Status2:");
+  Serial.println(byte(Reg_Status2));
 }
 
 void Write_AddressReg(byte Reg, byte *Address)
@@ -236,6 +247,7 @@ void Write_AddressReg(byte Reg, byte *Address)
        digitalWrite(SCK,0);
     }
   }
+  digitalWrite(CSN,1);
 }
 
 void init_TX_Mode()
