@@ -157,20 +157,26 @@ void Write_TX_Data(byte *TX_Data)
   digitalWrite(CSN,1);
 }
 
-void Read_RX_Data(byte *RX_Data)  //pending fix
+void Read_RX_Data(byte *RX_Data)
 {
   digitalWrite(CSN,0);
   SPI_Write(RD_RX_PLOAD);
-  for(int i = 0; i < 32; i++)
+  for(int j = 0; j < 4; j++)
   {
-    if(digitalRead(MISO))
-    {
-        RX_Data[i] = 1;
-    }
-    else
-    {
-        RX_Data[i] = 0;
-    }
+    for(int i=0;i<8;i++)
+      {
+        RX_Data[j] <<= 1;
+        digitalWrite(SCK,1);
+        if(digitalRead(MISO))
+        {
+            RX_Data[j]|=1;
+        }
+        else
+        {
+            RX_Data[j]|=0;
+        }
+        digitalWrite(SCK,0);
+      }
   }
 }
 
