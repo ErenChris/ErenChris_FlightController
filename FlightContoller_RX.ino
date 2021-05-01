@@ -48,6 +48,7 @@
 byte RX_Data_Package[4]= {0x00,0,0,0};
 byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
 byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
+byte outPut_Address[5];
 
 void setup() {
   Serial.begin(9600);
@@ -250,30 +251,101 @@ void Write_AddressReg(byte Reg, byte *Address)
   digitalWrite(CSN,1);
 }
 
+void Read_AddressReg(byte Reg, byte *outPut)
+{
+  digitalWrite(CSN,0);
+  SPI_Write(byte(Reg+WRITE_REG));
+  for(int j = 0; j <5; j++)
+  {
+    for(int i = 0; i < 8; i++)
+    {
+      outPut[j] <<= 1;
+      digitalWrite(SCK,1);
+      if(digitalRead(MISO))
+      {
+          outPut[j]|=1;
+      }
+      else
+      {
+          outPut[j]|=0;
+      }
+        digitalWrite(SCK,0);
+    }
+  }
+  digitalWrite(CSN,1);
+}
+
 void init_TX_Mode()
 {
+  byte tempValue;
   digitalWrite(CE, 0);
   Write_AddressReg(TX_ADDR, TX_RX_Address);
+  Read_AddressReg(TX_ADDR, outPut_Address);
+  Serial.print("TX地址寄存器为：");
+  Serial.println(outPut_Address[0]);
   Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  Read_AddressReg(RX_ADDR_P0, outPut_Address);
+  Serial.print("发送端RX地址寄存器为：");
+  Serial.println(outPut_Address[0]);
   SPI_Reg_Write(EN_AA, 0x01);
+  tempValue = SPI_Reg_Read(EN_AA);
+  Serial.print("EN_AA寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(EN_RXADDR, 0x01);
+  tempValue = SPI_Reg_Read(EN_RXADDR);
+  Serial.print("EN_RXADDR寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(CONFIG, 0x0e);
+  tempValue = SPI_Reg_Read(CONFIG);
+  Serial.print("CONFIG寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(RF_CH, 40);
+  tempValue = SPI_Reg_Read(RF_CH);
+  Serial.print("RF_CH寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(RF_SETUP, 0x07);
+  tempValue = SPI_Reg_Read(RF_SETUP);
+  Serial.print("RF_SETUP寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(SETUP_RETR, 0x1a);
+  tempValue = SPI_Reg_Read(SETUP_RETR);
+  Serial.print("SETUP_RETR寄存器为：");
+  Serial.println(tempValue);
   Write_TX_Data(TX_Data_Package);
   digitalWrite(CE, 1);
 }
 
 void init_RX_Mode()
 {
+  byte tempValue;
   digitalWrite(CE, 0);
   Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  Read_AddressReg(RX_ADDR_P0, outPut_Address);
+  Serial.print("TX地址寄存器为：");
+  Serial.println(outPut_Address[0]);
   SPI_Reg_Write(EN_AA, 0x01);
+  tempValue = SPI_Reg_Read(EN_AA);
+  Serial.print("EN_AA寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(EN_RXADDR, 0x01);
+  tempValue = SPI_Reg_Read(EN_RXADDR);
+  Serial.print("EN_RXADDR寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(RF_CH, 40);
+  tempValue = SPI_Reg_Read(RF_CH);
+  Serial.print("RF_CH寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(RX_PW_P0, 32);
+  tempValue = SPI_Reg_Read(RX_PW_P0);
+  Serial.print("RX_PW_P0寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(RF_SETUP, 0x07);
+  tempValue = SPI_Reg_Read(RF_SETUP);
+  Serial.print("RF_SETUP寄存器为：");
+  Serial.println(tempValue);
   SPI_Reg_Write(CONFIG, 0x0f);
+  tempValue = SPI_Reg_Read(CONFIG);
+  Serial.print("CONFIG寄存器为：");
+  Serial.println(tempValue);
   digitalWrite(CE, 1);
 }
