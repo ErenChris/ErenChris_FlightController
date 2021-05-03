@@ -230,7 +230,7 @@ void Reset_RX_Data()
 void Write_AddressReg(byte Reg, byte *Address)
 {
   digitalWrite(CSN,0);
-  SPI_Write(Reg);
+  SPI_Write(byte(Reg+WRITE_REG));
   for(int j = 0; j <5; j++)
   {
     for(int i = 0; i < 8; i++)
