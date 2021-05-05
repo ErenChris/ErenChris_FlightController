@@ -48,7 +48,7 @@
 byte RX_Data_Package[4];
 byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
 byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
-byte outPut_Address[5];
+byte outPut_Address[5] = {5,5,5,5,5};
 
 void setup() {
   Serial.begin(9600);
@@ -185,10 +185,8 @@ void Read_RX_Data(byte *RX_Data)
 void Send_Reset_TX_Data()
 {
   byte Reg_Status;
-  byte Reg_Status2;
 
   Reg_Status = SPI_Reg_Read(STATUS);
-  Serial.print("Status:");
   Serial.println(Reg_Status);
   if(Reg_Status & TX_DS)
   {
@@ -202,24 +200,29 @@ void Send_Reset_TX_Data()
   }
 
   SPI_Reg_Write(STATUS,Reg_Status);
-  Reg_Status2 = SPI_Reg_Read(STATUS);
-  Serial.print("Status2:");
-  Serial.println(Reg_Status2);
   delay(10);
 }
 
 void Reset_RX_Data()
 {
   byte Reg_Status;
+  byte Reg_Status2;
 
   Reg_Status = SPI_Reg_Read(STATUS);
+//  Serial.println(byte(Reg_Status));
+  delay(100);
+//  Serial.print("接受中断位：");
+//  Serial.println(Reg_Status & RX_DR);
   if(Reg_Status & RX_DR)
   {
     Read_RX_Data(RX_Data_Package);
     SPI_Write(FLUSH_RX);
   }
 
-  SPI_Reg_Write(STATUS,Reg_Status);
+  SPI_Reg_Write(STATUS,0x40);
+  Reg_Status2 = SPI_Reg_Read(STATUS);
+//  Serial.print("Reg_Status2:");
+//  Serial.println(byte(Reg_Status2));
 }
 
 void Write_AddressReg(byte Reg, byte *Address)
@@ -277,7 +280,7 @@ void init_TX_Mode()
   Write_AddressReg(TX_ADDR, TX_RX_Address);
   Read_AddressReg(TX_ADDR, outPut_Address);
   Serial.print("TX地址寄存器为：");
-  Serial.println(outPut_Address[0]);
+  Serial.println(outPut_Address[1]);
   Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("发送端RX地址寄存器为：");
@@ -317,7 +320,7 @@ void init_RX_Mode()
   Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("TX地址寄存器为：");
-  Serial.println(outPut_Address[0]);
+  Serial.println(outPut_Address[1]);
   SPI_Reg_Write(EN_AA, 0x01);
   tempValue = SPI_Reg_Read(EN_AA);
   Serial.print("EN_AA寄存器为：");
