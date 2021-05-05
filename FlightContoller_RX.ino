@@ -66,9 +66,9 @@ void setup() {
 
 void loop() 
 {
-//  Serial.println(RX_Data_Package[0]);
+  Serial.println(RX_Data_Package[0]);
   Reset_RX_Data();
-//  Serial.println(RX_Data_Package[0]);
+  Serial.println(RX_Data_Package[0]);
 }
 
 void init_nrf24l01()
