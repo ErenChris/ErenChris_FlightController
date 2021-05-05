@@ -60,6 +60,7 @@ void setup() {
   pinMode(SCK,OUTPUT);
 
   init_nrf24l01();
+
   Serial.println("-----------------初始化已完成-----------------");
 }
 
@@ -70,8 +71,12 @@ void loop()
 
 void init_nrf24l01()
 {
+  int tempValue;
+    
   digitalWrite(CE,0);
   digitalWrite(CSN,1);
+  tempValue = SPI_Reg_Read(RF_CH);
+  Serial.println(byte(tempValue));
 
   init_TX_Mode();
 }
@@ -200,7 +205,6 @@ void Send_Reset_TX_Data()
   }
 
   SPI_Reg_Write(STATUS,Reg_Status);
-  delay(10);
 }
 
 void Reset_RX_Data()
@@ -210,7 +214,6 @@ void Reset_RX_Data()
 
   Reg_Status = SPI_Reg_Read(STATUS);
 //  Serial.println(byte(Reg_Status));
-  delay(100);
 //  Serial.print("接受中断位：");
 //  Serial.println(Reg_Status & RX_DR);
   if(Reg_Status & RX_DR)
@@ -277,14 +280,12 @@ void init_TX_Mode()
 {
   byte tempValue;
   digitalWrite(CE, 0);
-  Write_AddressReg(TX_ADDR, TX_RX_Address);
-  Read_AddressReg(TX_ADDR, outPut_Address);
-  Serial.print("TX地址寄存器为：");
-  Serial.println(outPut_Address[1]);
+
   Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("发送端RX地址寄存器为：");
-  Serial.println(outPut_Address[0]);
+  Serial.println(outPut_Address[1]);
+  
   SPI_Reg_Write(EN_AA, 0x01);
   tempValue = SPI_Reg_Read(EN_AA);
   Serial.print("EN_AA寄存器为：");
@@ -310,6 +311,15 @@ void init_TX_Mode()
   Serial.print("SETUP_RETR寄存器为：");
   Serial.println(tempValue);
   Write_TX_Data(TX_Data_Package);
+
+  Write_AddressReg(TX_ADDR, TX_RX_Address);
+  Read_AddressReg(TX_ADDR, outPut_Address);
+  Serial.print("TX地址寄存器为：");
+  Serial.println(outPut_Address[1]);
+
+  tempValue = SPI_Reg_Read(STATUS);
+  Serial.println(tempValue);
+
   digitalWrite(CE, 1);
 }
 
