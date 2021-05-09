@@ -47,8 +47,9 @@
 
 byte RX_Data_Package[4];
 byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
-byte TX_RX_Address[5] = {0x34,0x43,0x10,0x10,0x01};
-byte outPut_Address[5] = {5,5,5,5,5};
+byte TX_RX_Address_1[5] = {0x34,0x43,0x10,0x10,0x01};
+byte TX_RX_Address_2[5] = {0x34,0x43,0x10,0x10,0x01};
+byte outPut_Address[5] = {0,0,0,0,0};
 
 void setup() {
   Serial.begin(9600);
@@ -75,8 +76,6 @@ void init_nrf24l01()
     
   digitalWrite(CE,0);
   digitalWrite(CSN,1);
-  tempValue = SPI_Reg_Read(RF_CH);
-  Serial.println(byte(tempValue));
 
   init_TX_Mode();
 }
@@ -276,12 +275,26 @@ void Read_AddressReg(byte Reg, byte *outPut)
   digitalWrite(CSN,1);
 }
 
+void arrayToZero(byte *outPut)
+{
+  for(int i=0; i<5; i++)
+  {
+    outPut[i] = 0x00;
+  }
+}
+
 void init_TX_Mode()
 {
   byte tempValue;
   digitalWrite(CE, 0);
 
-  Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  Write_AddressReg(TX_ADDR, TX_RX_Address_1);
+  Read_AddressReg(TX_ADDR, outPut_Address);
+  Serial.print("TX地址寄存器为：");
+  Serial.println(outPut_Address[1]);
+  arrayToZero(outPut_Address);
+  
+  Write_AddressReg(RX_ADDR_P0, TX_RX_Address_2);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("发送端RX地址寄存器为：");
   Serial.println(outPut_Address[1]);
@@ -312,11 +325,6 @@ void init_TX_Mode()
   Serial.println(tempValue);
   Write_TX_Data(TX_Data_Package);
 
-  Write_AddressReg(TX_ADDR, TX_RX_Address);
-  Read_AddressReg(TX_ADDR, outPut_Address);
-  Serial.print("TX地址寄存器为：");
-  Serial.println(outPut_Address[1]);
-
   tempValue = SPI_Reg_Read(STATUS);
   Serial.println(tempValue);
 
@@ -327,7 +335,7 @@ void init_RX_Mode()
 {
   byte tempValue;
   digitalWrite(CE, 0);
-  Write_AddressReg(RX_ADDR_P0, TX_RX_Address);
+  Write_AddressReg(RX_ADDR_P0, TX_RX_Address_1);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("TX地址寄存器为：");
   Serial.println(outPut_Address[1]);
