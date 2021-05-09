@@ -1,0 +1,197 @@
+//****************************************************
+#define READ_REG        0x00  
+#define WRITE_REG       0x20  
+#define RD_RX_PLOAD     0x61  
+#define WR_TX_PLOAD     0xA0  
+#define FLUSH_TX        0xE1  
+#define FLUSH_RX        0xE2  
+#define REUSE_TX_PL     0xE3  
+#define NOP             0xFF  
+//***************************************************
+#define RX_DR    0x40
+#define TX_DS    0x20
+#define MAX_RT   0x10
+//***************************************************
+#define CONFIG          0x00 
+#define EN_AA           0x01  
+#define EN_RXADDR       0x02  
+#define SETUP_AW        0x03  
+#define SETUP_RETR      0x04  
+#define RF_CH           0x05  
+#define RF_SETUP        0x06  
+#define STATUS          0x07  
+#define OBSERVE_TX      0x08  
+#define CD              0x09 
+#define RX_ADDR_P0      0x0A  
+#define RX_ADDR_P1      0x0B  
+#define RX_ADDR_P2      0x0C  
+#define RX_ADDR_P3      0x0D  
+#define RX_ADDR_P4      0x0E 
+#define RX_ADDR_P5      0x0F  
+#define TX_ADDR         0x10  
+#define RX_PW_P0        0x11  
+#define RX_PW_P1        0x12  
+#define RX_PW_P2        0x13  
+#define RX_PW_P3        0x14 
+#define RX_PW_P4        0x15  
+#define RX_PW_P5        0x16  
+#define FIFO_STATUS     0x17  
+
+#define CE       7
+#define CSN      8
+#define IRQ      6
+
+#define TX_ADR_WIDTH    5   
+#define TX_PLOAD_WIDTH  32  
+
+byte TX_ADDRESS[TX_ADR_WIDTH]  = 
+{
+  0x34,0x43,0x10,0x10,0x01
+}; 
+
+byte rx_buf[TX_PLOAD_WIDTH];
+byte tx_buf[TX_PLOAD_WIDTH];
+
+//***************************************************
+void setup() 
+{
+  pinMode(CE,  OUTPUT);
+  pinMode(CSN, OUTPUT);
+  pinMode(MOSI,  OUTPUT);
+  pinMode(MISO, INPUT);
+  pinMode(IRQ, INPUT);
+  pinMode(SCK, OUTPUT);
+  
+  Serial.begin(9600);
+  init_nrf24l01();   
+  byte status=SPI_Read(STATUS);
+  Serial.println("*****************RX_Mode start******************************R");
+  Serial.print("status = ");
+  Serial.println(status,HEX);       
+  RX_Mode();                            
+}
+void loop() 
+{ 
+  RX_DATA();
+  Serial.println(rx_buf[2],HEX);
+} 
+
+void init_nrf24l01()
+{
+  digitalWrite(IRQ, 0);
+  digitalWrite(CE, 0);			
+  digitalWrite(CSN, 1);               
+}
+void RX_DATA()
+{
+    byte status;
+    status = SPI_Read(STATUS);                      
+    if(status&RX_DR)                                            
+    {
+      SPI_Read_Buf(RD_RX_PLOAD, rx_buf, TX_PLOAD_WIDTH);          
+      SPI_RW_Reg(FLUSH_RX,0);       
+    }
+      SPI_RW_Reg(WRITE_REG+STATUS,status);    
+}
+
+
+byte SPI_RW(unsigned char Byte)
+{
+  byte i;
+  for(i=0;i<8;i++)              
+  {
+    if(Byte&0x80)
+    {
+      digitalWrite(MOSI, 1);   
+    }
+    else
+    {
+      digitalWrite(MOSI, 0);
+    }
+    digitalWrite(SCK, 1);                   
+    Byte <<= 1;                       
+    if(digitalRead(MISO) == 1)
+    {
+      Byte |= 1;       	             
+    }
+    digitalWrite(SCK, 0);         	
+  }
+  return(Byte);           	    
+}
+
+/**************************************************/
+byte SPI_RW_Reg(unsigned char reg, unsigned char value)
+{
+  byte status;
+
+  digitalWrite(CSN, 0);              
+  status = SPI_RW(reg);                
+  SPI_RW(value);                         
+  digitalWrite(CSN, 1);                  
+  return(status);            
+}
+
+
+
+/**************************************************/
+byte SPI_Read(unsigned char reg)
+{
+  byte reg_val;
+
+  digitalWrite(CSN, 0);           
+  SPI_RW(reg);                
+  reg_val = SPI_RW(0);        
+  digitalWrite(CSN, 1);         
+
+  return(reg_val);            
+}
+
+
+
+/**************************************************/
+byte SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes)
+{
+  byte status,i;
+
+  digitalWrite(CSN, 0);              
+  status = SPI_RW(reg);       	    
+
+  for(i=0;i<bytes;i++)
+  {
+    pBuf[i] = SPI_RW(0);    
+  }
+
+  digitalWrite(CSN, 1);                  
+
+  return(status);                 
+}
+
+
+
+/**************************************************/
+byte SPI_Write_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes)
+{
+  byte status,i;
+
+  digitalWrite(CSN, 0);                
+  status = SPI_RW(reg);            
+  for(i=0;i<bytes; i++)             
+  {
+    SPI_RW(*pBuf++);
+  }
+  digitalWrite(CSN, 1);                 
+  return(status);                  
+}
+
+void RX_Mode()
+{
+  digitalWrite(CE, 0);
+  SPI_Write_Buf(WRITE_REG + RX_ADDR_P0, TX_ADDRESS, TX_ADR_WIDTH);
+  SPI_RW_Reg(WRITE_REG + EN_AA, 0x01);     
+  SPI_RW_Reg(WRITE_REG + EN_RXADDR, 0x01); 
+  SPI_RW_Reg(WRITE_REG + RF_CH, 40);        
+  SPI_RW_Reg(WRITE_REG + RX_PW_P0, TX_PLOAD_WIDTH); 
+  SPI_RW_Reg(WRITE_REG + RF_SETUP, 0x07);  
+  SPI_RW_Reg(WRITE_REG + CONFIG, 0x0f);   
+  digitalWrite(CE, 1);
+}
