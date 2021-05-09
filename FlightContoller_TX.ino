@@ -138,7 +138,7 @@ byte SPI_Reg_Read(byte address)
   return outputValue;
 }
 
-void Write_TX_Data(byte *TX_Data)
+void Write_TX_Data(byte TX_Data[4])
 {
   digitalWrite(CSN,0);
   SPI_Write(WR_TX_PLOAD);
@@ -164,26 +164,33 @@ void Write_TX_Data(byte *TX_Data)
 
 void Read_RX_Data(byte *RX_Data)
 {
+  byte tempDataArray[4]={0,0,0,0};
+  
   digitalWrite(CSN,0);
   SPI_Write(RD_RX_PLOAD);
   for(int j = 0; j < 4; j++)
   {
     for(int i=0;i<8;i++)
       {
-        RX_Data[j] <<= 1;
+        tempDataArray[j] <<= 1;
         digitalWrite(SCK,1);
         if(digitalRead(MISO))
         {
-            RX_Data[j]|=1;
+            tempDataArray[j]|=1;
         }
         else
         {
-            RX_Data[j]|=0;
+            tempDataArray[j]|=0;
         }
         digitalWrite(SCK,0);
       }
   }
   digitalWrite(CSN,1);
+
+  for(int i=0; i<4; i++)
+  {
+    RX_Data[i] = tempDataArray[i];
+  }
 }
 
 void Send_Reset_TX_Data()
@@ -204,12 +211,13 @@ void Send_Reset_TX_Data()
   }
 
   SPI_Reg_Write(STATUS,Reg_Status);
+  delay(20);
 }
 
 void Reset_RX_Data()
 {
   byte Reg_Status;
-  byte Reg_Status2;
+//  byte Reg_Status2;
 
   Reg_Status = SPI_Reg_Read(STATUS);
 //  Serial.println(byte(Reg_Status));
@@ -221,8 +229,8 @@ void Reset_RX_Data()
     SPI_Write(FLUSH_RX);
   }
 
-  SPI_Reg_Write(STATUS,0x40);
-  Reg_Status2 = SPI_Reg_Read(STATUS);
+  SPI_Reg_Write(STATUS,Reg_Status);
+//  Reg_Status2 = SPI_Reg_Read(STATUS);
 //  Serial.print("Reg_Status2:");
 //  Serial.println(byte(Reg_Status2));
 }
