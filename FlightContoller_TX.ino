@@ -45,11 +45,19 @@
 #define TX_DS 0x20
 #define MAX_RT 0x10
 
-byte RX_Data_Package[4];
-byte TX_Data_Package[4]= {0x01,0x02,0x03,0x04};
+#define TX_ADR_WIDTH    5   
+#define TX_PLOAD_WIDTH  32  
+
+byte RX_Data_Package[32];
+byte TX_Data_Package[32];
 byte TX_RX_Address_1[5] = {0x34,0x43,0x10,0x10,0x01};
 byte TX_RX_Address_2[5] = {0x34,0x43,0x10,0x10,0x01};
 byte outPut_Address[5] = {0,0,0,0,0};
+
+byte TX_ADDRESS[TX_ADR_WIDTH]  = 
+{
+  0x34,0x43,0x10,0x10,0x01
+}; 
 
 void setup() {
   Serial.begin(9600);
@@ -59,6 +67,8 @@ void setup() {
   pinMode(MOSI,OUTPUT);
   pinMode(MISO,INPUT_PULLUP);
   pinMode(SCK,OUTPUT);
+
+  TX_Data_Package[2] = 0x0c;
 
   init_nrf24l01();
 
@@ -138,11 +148,11 @@ byte SPI_Reg_Read(byte address)
   return outputValue;
 }
 
-void Write_TX_Data(byte TX_Data[4])
+void Write_TX_Data(byte TX_Data[32])
 {
   digitalWrite(CSN,0);
   SPI_Write(WR_TX_PLOAD);
-  for(int j = 0; j < 4; j++)
+  for(int j = 0; j < 32; j++)
   {
     for(int i = 0; i < 8; i++)
     {
@@ -164,11 +174,11 @@ void Write_TX_Data(byte TX_Data[4])
 
 void Read_RX_Data(byte *RX_Data)
 {
-  byte tempDataArray[4]={0,0,0,0};
+  byte tempDataArray[32];
   
   digitalWrite(CSN,0);
   SPI_Write(RD_RX_PLOAD);
-  for(int j = 0; j < 4; j++)
+  for(int j = 0; j < 32; j++)
   {
     for(int i=0;i<8;i++)
       {
@@ -187,7 +197,7 @@ void Read_RX_Data(byte *RX_Data)
   }
   digitalWrite(CSN,1);
 
-  for(int i=0; i<4; i++)
+  for(int i=0; i<32; i++)
   {
     RX_Data[i] = tempDataArray[i];
   }
@@ -202,12 +212,12 @@ void Send_Reset_TX_Data()
   if(Reg_Status & TX_DS)
   {
     SPI_Write(FLUSH_TX);
-    Write_TX_Data(TX_Data_Package);
+    SPI_Write_Buf(WR_TX_PLOAD,TX_Data_Package,TX_PLOAD_WIDTH);
   }
   if(Reg_Status & MAX_RT)
   {
     SPI_Write(FLUSH_TX);
-    Write_TX_Data(TX_Data_Package);
+    SPI_Write_Buf(WR_TX_PLOAD,TX_Data_Package,TX_PLOAD_WIDTH);
   }
 
   SPI_Reg_Write(STATUS,Reg_Status);
@@ -296,13 +306,13 @@ void init_TX_Mode()
   byte tempValue;
   digitalWrite(CE, 0);
 
-  Write_AddressReg(TX_ADDR, TX_RX_Address_1);
+  SPI_Write_Buf(WRITE_REG+TX_ADDR,TX_ADDRESS,TX_ADR_WIDTH);
+  SPI_Write_Buf(WRITE_REG+RX_ADDR_P0,TX_ADDRESS,TX_ADR_WIDTH);
   Read_AddressReg(TX_ADDR, outPut_Address);
   Serial.print("TX地址寄存器为：");
   Serial.println(outPut_Address[1]);
   arrayToZero(outPut_Address);
   
-  Write_AddressReg(RX_ADDR_P0, TX_RX_Address_2);
   Read_AddressReg(RX_ADDR_P0, outPut_Address);
   Serial.print("发送端RX地址寄存器为：");
   Serial.println(outPut_Address[1]);
@@ -331,12 +341,20 @@ void init_TX_Mode()
   tempValue = SPI_Reg_Read(SETUP_RETR);
   Serial.print("SETUP_RETR寄存器为：");
   Serial.println(tempValue);
-  Write_TX_Data(TX_Data_Package);
+
+  SPI_Write(FLUSH_TX);
+  
+  tempValue = SPI_Reg_Read(STATUS);
+  Serial.println(tempValue);
+  delay(50);
+  
+  SPI_Write_Buf(WR_TX_PLOAD,TX_Data_Package,TX_PLOAD_WIDTH);
 
   tempValue = SPI_Reg_Read(STATUS);
   Serial.println(tempValue);
 
   digitalWrite(CE, 1);
+  delay(100);
 }
 
 void init_RX_Mode()
@@ -372,4 +390,62 @@ void init_RX_Mode()
   Serial.print("CONFIG寄存器为：");
   Serial.println(tempValue);
   digitalWrite(CE, 1);
+  delay(100);
+}
+
+/***********************123***************************/
+byte SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes)
+{
+  byte status,i;
+
+  digitalWrite(CSN, 0);              
+  status = SPI_RW(reg);             
+
+  for(i=0;i<bytes;i++)
+  {
+    pBuf[i] = SPI_RW(0);    
+  }
+
+  digitalWrite(CSN, 1);                  
+
+  return(status);                 
+}
+
+byte SPI_RW(unsigned char Byte)
+{
+  byte i;
+  for(i=0;i<8;i++)              
+  {
+    if(Byte&0x80)
+    {
+      digitalWrite(MOSI, 1);   
+    }
+    else
+    {
+      digitalWrite(MOSI, 0);
+    }
+    digitalWrite(SCK, 1);                   
+    Byte <<= 1;                       
+    if(digitalRead(MISO) == 1)
+    {
+      Byte |= 1;                      
+    }
+    digitalWrite(SCK, 0);           
+  }
+  return(Byte);                 
+}
+
+/**************************************************/
+byte SPI_Write_Buf(unsigned char reg, unsigned char *pBuf, unsigned char bytes)
+{
+  byte status,i;
+
+  digitalWrite(CSN, 0);                
+  status = SPI_RW(reg);            
+  for(i=0;i<bytes; i++)             
+  {
+    SPI_RW(*pBuf++);
+  }
+  digitalWrite(CSN, 1);                 
+  return(status);                  
 }
